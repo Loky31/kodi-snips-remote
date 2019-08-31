@@ -10,7 +10,7 @@ is_injecting=0
 HOST = '127.0.0.1'
 PORT = 1883
 
-#snips username with ':' or '__'
+#snips username with ':' or '__' at the end
 snipsuser = ""
 
 #kodi  login data
@@ -19,7 +19,8 @@ kodi_user = ''
 kodi_pw = ''
 kodi_port = '8080'
 
-debuglevel = 0 # 0= snips subscriptions; 1= function call; 2= debugs; 3=higher debug
+
+debuglevel = 1 # 0= snips subscriptions; 1= function call; 2= debugs; 3=higher debug
 
 def ausgabe(text,mode=3):
     # 0= snips subscriptions; 1= function call; 2= debugs; 3=higher debug
@@ -90,7 +91,7 @@ def kodi_navigation_input(slotvalue,session_id):
     kodi.send_input(slotvalue)
     end_session(session_id)
     return
-def kodi_navigation_gui(slotvalue,session_id):
+def kodi_navigation_gui(slotvalue,session_id=""):
     #for the kodi GUI.ActivateWindow. prepares values before send
     ausgabe('kodi_navigation_gui',1)
     window=""
@@ -121,7 +122,8 @@ def kodi_navigation_gui(slotvalue,session_id):
     else:
         window = slotvalue
     kodi.open_gui(window=window,filtervalue=filtervalue)
-    end_session(session_id)
+    if session_id != "":
+        end_session(session_id)
     return
 def start_session(session_type="action",text="",intent_filter="",customData=""):
     #starts a snips session as notification or as action. also adds custom data to session
@@ -172,10 +174,45 @@ def search(slotvalue,slotname,json_d):
             mediatype = 'tvshows'
         elif slotname =='movies':
             mediatype = 'movies'
-        elif slotname == 'artist' or slotname == 'albums':
+        elif slotname == 'artist': #or slotname == 'albums':
             mediatype = 'artists'
+        elif slotname == 'albums':
+            mediatype ='albums'
         kodi.open_gui("", mediatype, slotvalue,isfilter=1)
     return(titles)
+def start_tv():
+    ausgabe("start_tv",1)
+    kodi.stop()
+    kodi_navigation_gui("videoplaylist")
+    showsid_tupel= build_tupel(kodi.get_tv_shows("tv"),"tvshowid")
+    ausgabe(len(showsid_tupel))
+    #kodi.show_notification(len(showsid_tupel)+" Serien gefunden. Episoden werden gesucht")
+    id_tupel =[]    
+    kodi.show_notification("Programm wird geladen")
+    kodi.clear_playlist("1")
+    json_data = kodi.get_tv_shows_episodeids(showsid_tupel)
+    for item in json_data:
+        if item['result']['limits']['total'] != 0:
+            id_tupel_temp = build_tupel(item['result']['episodes'], "episodeid")
+            shuffle(id_tupel_temp)
+            id_tupel = id_tupel + [id_tupel_temp[0]]+ [id_tupel_temp[1]]+ [id_tupel_temp[2]]+ [id_tupel_temp[3]]
+    ausgabe(len(id_tupel))
+    shuffle(id_tupel)
+    kodi.insert_playlist(id_tupel,'episodeid', '1')
+    kodi.start_play('1')    
+    return
+def start_playlist(playlist, playlistid):
+    ausgabe("start_playlist",1)
+    kodi.stop()
+    kodi_navigation_gui("videoplaylist")
+    kodi.add_playlist(playlist,playlistid)
+    kodi.start_play(playlistid)
+    return
+def start_partymode():
+    kodi.stop()
+    kodi_navigation_gui("musicplaylist")
+    kodi.partymode()
+    return
 def main_controller(slotvalue,slotname,id_slot_name,json_d,session_id,intent_filter,israndom,playlistid):
     
     '''
@@ -210,32 +247,40 @@ def main_controller(slotvalue,slotname,id_slot_name,json_d,session_id,intent_fil
         elif slotname=='movies':
             id_tupel = [media_id_of_title_found]
         elif slotname=='genre':
-            json_songs = kodi.get_songs_by(id_slot_name,media_id_of_title_found)
-            id_slot_name="songid"
-            id_tupel = build_tupel(json_songs, id_slot_name)
+            id_tupel = [media_id_of_title_found]
+            #json_songs = kodi.get_songs_by(id_slot_name,media_id_of_title_found)
+            #id_slot_name="songid"
+            #id_tupel = build_tupel(json_songs, id_slot_name)
         elif slotname=='artist':
-            json_songs = kodi.get_songs_by(id_slot_name,media_id_of_title_found)
-            id_slot_name="songid"
-            id_tupel = build_tupel(json_songs, id_slot_name)
+            id_tupel = [media_id_of_title_found]
+            #json_songs = kodi.get_songs_by(id_salot_name,media_id_of_title_found)
+            #id_slot_name="songid"
+            #id_tupel = build_tupel(json_songs, id_slot_name)
         elif slotname=='albums':
-            json_songs = kodi.get_songs_by(id_slot_name,media_id_of_title_found)
-            id_slot_name="songid"
-            id_tupel = build_tupel(json_songs, id_slot_name)
+            id_tupel = [media_id_of_title_found]
+            #json_songs = kodi.get_songs_by(id_slot_name,media_id_of_title_found)
+            #id_slot_name="songid"
+            #id_tupel = build_tupel(json_songs, id_slot_name)
         playing_state_old = 0
         if israndom == "random":
             shuffle(id_tupel)
         end_session(session_id, text="")
         kodi.stop()
+        if playlistid == 1:
+            kodi_navigation_gui("videoplaylist")
+        elif playlistid == 0:
+            kodi_navigation_gui("musicplaylist")
         kodi.insert_playlist(id_tupel,id_slot_name, playlistid)
         kodi.start_play(playlistid)
     else:
         titles = search(slotvalue,slotname,json_d)
-        ausgabe(titles)
+        #ausgabe(titles)
         if len(titles) == 1:
             end_session(session_id, text="")
             main_controller(titles[0],slotname,id_slot_name,json_d,session_id,intent_filter,israndom,playlistid)
             return
-        keep_session_alive(session_id,text="",intent_filter=intent_filter,customData="media_selected")
+        elif len(titles) > 1:
+            keep_session_alive(session_id,text="okay. was?",intent_filter=intent_filter,customData="media_selected")            
     return
 
 def on_connect(client, userdata, flags, rc):
@@ -366,24 +411,57 @@ def on_message(client, userdata, msg):
                 slotname: genre
                 slotvalue:  -filled from injection
                 '''
-                intent_filter = '"'+snipsuser+'play_genre"'
+                intent_filter = '"'+snipsuser+'play_genre",'+'"'+snipsuser+'select_genre"'
                 main_controller(slotvalue,slotname,'genreid',kodi.get_genre(),session_id,intent_filter,slotisrandom,0)
+            elif msg.topic == 'hermes/intent/'+snipsuser+'select_genre':
+                '''
+                if multiple shows are found e.g hey snips play the show marvels - marvels iron fist, marvels luke cake....
+                slotname: shows
+                slotvalue:  -filled from injection
+                '''
+                if payload['customData']=="media_selected":
+                    intent_filter = '"'+snipsuser+'play_genre",'+'"'+snipsuser+'select_genre"'
+                    main_controller(slotvalue,slotname,'genreid',kodi.get_genre(),session_id,intent_filter,slotisrandom,0)
+                else:
+                    end_session(session_id,text="")
             elif msg.topic == 'hermes/intent/'+snipsuser+'play_artist':
                 '''
                 hey snips play songs by lady gaga
                 slotname: artist
                 slotvalue:  -filled from injection
                 '''
-                intent_filter = '"'+snipsuser+'play_genre"'
+                intent_filter = '"'+snipsuser+'play_artist",'+'"'+snipsuser+'select_artist"'
                 main_controller(slotvalue,slotname,'artistid',kodi.get_artists(),session_id,intent_filter,slotisrandom,0)
+            elif msg.topic == 'hermes/intent/'+snipsuser+'select_artist':
+                '''
+                if multiple shows are found e.g hey snips play the show marvels - marvels iron fist, marvels luke cake....
+                slotname: shows
+                slotvalue:  -filled from injection
+                '''
+                if payload['customData']=="media_selected":
+                    intent_filter = '"'+snipsuser+'play_artist",'+'"'+snipsuser+'select_artist"'
+                    main_controller(slotvalue,slotname,'artistid',kodi.get_artists(),session_id,intent_filter,slotisrandom,0)
+                else:
+                    end_session(session_id,text="")
             elif msg.topic == 'hermes/intent/'+snipsuser+'play_album':
                 '''
                 hey snips play album ...
                 slotname: albums
                 slotvalue:  -filled from injection
                 '''
-                intent_filter = '"'+snipsuser+'play_album"'
+                intent_filter = '"'+snipsuser+'play_album",'+'"'+snipsuser+'select_album"'
                 main_controller(slotvalue,slotname,'albumid',kodi.get_albums(),session_id,intent_filter,slotisrandom,0)
+            elif msg.topic == 'hermes/intent/'+snipsuser+'select_album':
+                '''
+                if multiple shows are found e.g hey snips play the show marvels - marvels iron fist, marvels luke cake....
+                slotname: shows
+                slotvalue:  -filled from injection
+                '''
+                if payload['customData']=="media_selected":
+                    intent_filter = '"'+snipsuser+'play_album",'+'"'+snipsuser+'select_album"'
+                    main_controller(slotvalue,slotname,'albumid',kodi.get_albums(),session_id,intent_filter,slotisrandom,0)
+                else:
+                    end_session(session_id,text="")
             elif msg.topic == 'hermes/intent/'+snipsuser+'kodiNavigator':
                 '''
                 hey snips start navigator
@@ -468,15 +546,19 @@ def on_message(client, userdata, msg):
                     #hey snips play previous
                     kodi.previous_media()
                     ausgabe('previous_media',1)
-                elif msg.topic == 'hermes/intent/'+snipsuser+'KodiShuffleON':
-                    #hey snips set suffle on
-                    kodi.shuffle_on(playlistid)
+                elif msg.topic == 'hermes/intent/'+snipsuser+'KodiShuffle':
+                    '''
+                    hey snips set shuffle off
+                    slotname: on_off
+                    slotvalue: on, off +synonyms
+                    '''
+                    kodi.shuffle(slotvalue)
                     ausgabe('shuffle_on',1)
-                elif msg.topic == 'hermes/intent/'+snipsuser+'KodiShuffleOFF':
-                    #hey snips set suffle off
-                    kodi.shuffle_off(playlistid)
-                    ausgabe('shuffle_off',1)
-                elif msg.topic == 'hermes/intent/'+snipsuser+'subtitles':
+                elif msg.topic == 'hermes/intent/'+snipsuser+'kodiSubtitles':
+											 
+												
+											
+																		 
                     '''
                     hey snips set subtitles off
                     slotname: on_off
@@ -512,6 +594,17 @@ def on_message(client, userdata, msg):
                     slotvalue:  -filled from injection
                     '''
                     search(slotvalue,slotname,kodi.get_albums())
+                elif msg.topic == 'hermes/intent/'+snipsuser+'play_music':
+                    '''
+                    
+                    '''
+                    start_partymode()
+                elif msg.topic == 'hermes/intent/'+snipsuser+'play_tv':
+                    #start_tv()
+                    start_playlist("video/tv.xsp", 1)
+                elif msg.topic == 'hermes/intent/'+snipsuser+'kodi_wakeup':
+                    if str(kodi.get_gui()['id']) == '13003':
+                        kodi.send_input("up")
                 end_session(session_id,text="")
         else:
             end_session(session_id,text="")
