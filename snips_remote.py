@@ -7,17 +7,17 @@ is_in_session=0
 is_injecting=0
 
 #MQTT host and port
-HOST = '127.0.0.1'
+HOST = '192.168.1.56'
 PORT = 1883
 
 #snips username with ':' or '__' at the end
-snipsuser = ""
+snipsuser = "Loky31:"
 
 #kodi  login data
-kodi_ip = ''
+kodi_ip = '192.168.1.3'
 kodi_user = ''
 kodi_pw = ''
-kodi_port = '8080'
+kodi_port = '80'
 
 
 debuglevel = 1 # 0= snips subscriptions; 1= function call; 2= debugs; 3=higher debug
@@ -188,7 +188,7 @@ def start_tv():
     ausgabe(len(showsid_tupel))
     #kodi.show_notification(len(showsid_tupel)+" Serien gefunden. Episoden werden gesucht")
     id_tupel =[]    
-    kodi.show_notification("Programm wird geladen")
+    kodi.show_notification("Le programme est en cours de chargement")
     kodi.clear_playlist("1")
     json_data = kodi.get_tv_shows_episodeids(showsid_tupel)
     for item in json_data:
@@ -243,7 +243,7 @@ def main_controller(slotvalue,slotname,id_slot_name,json_d,session_id,intent_fil
             if json_episodes['limits']['total'] != 0:
                 id_tupel = build_tupel(json_episodes['episodes'], id_slot_name)
             else:
-                start_session(session_type="notification", text="keine episoden gefunden")
+                start_session(session_type="notification", text="aucun épisode trouvé")
         elif slotname=='movies':
             id_tupel = [media_id_of_title_found]
         elif slotname=='genre':
