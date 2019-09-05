@@ -1,0 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import json
+import configparser
+import io
+import requests
+import telegram
+from hermes_python.hermes import Hermes
+from hermes_python.ffi.utils import MqttOptions
