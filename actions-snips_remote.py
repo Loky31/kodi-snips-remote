@@ -2,6 +2,9 @@ import paho.mqtt.client as mqtt
 import json
 import kodi
 from random import shuffle
+
+
+
 playing_state_old = 0
 is_in_session=0
 is_injecting=0
@@ -20,7 +23,9 @@ kodi_pw = ''
 kodi_port = '80'
 
 
-debuglevel = 1 # 0= snips subscriptions; 1= function call; 2= debugs; 3=higher debug
+debuglevel = 2 # 0= snips subscriptions; 1= function call; 2= debugs; 3=higher debug
+
+
 
 def ausgabe(text,mode=3):
     # 0= snips subscriptions; 1= function call; 2= debugs; 3=higher debug
@@ -47,8 +52,8 @@ def build_tupel(json, filtervalue):
     return tupel
 
 def inject():
-    #makes an injection for snpips from the kodi library. Entities Injection musst be installed
-    #replaces all special chars with ' ' bevor inject.
+    #makes an injection for snips from the kodi library. Entities Injection must be installed
+    #replaces all special chars with ' ' before inject.
     global is_injecting
     is_injecting = 1
     ausgabe('inject',1)
@@ -167,7 +172,7 @@ def search(slotvalue,slotname,json_d):
     ausgabe("search",1)
     titles = kodi.find_title(slotvalue,json_d)
     if len(titles) ==0:
-        start_session(session_type="notification", text="keine medien gefunden")
+        start_session(session_type="notification", text="aucun média trouvé")
     elif len(titles) >=1:
         ausgabe('slotname: '+slotname,2)
         if slotname == 'shows':
@@ -615,3 +620,5 @@ client.on_connect = on_connect
 client.on_message = on_message
 client.connect(HOST, PORT, 60)
 client.loop_forever()
+
+
