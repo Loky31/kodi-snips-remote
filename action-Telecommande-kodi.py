@@ -79,7 +79,7 @@ def inject():
     #with Hermes(mqtt_options=mqtt_opts) as h:
     #    h.request_injection(request)
     #Hermes.publish("hermes/injection/perform",json.dumps(send))
-    return
+    return "Je me synchronise avec Kodi"
 
 def search(slotvalue,slotname,json_d):
     #check if word is in titles of the kodi library. e.g. marvel will be in more than 1 title. if found it will display it in kodi
@@ -163,8 +163,7 @@ def intent_callback(hermes, intent_message):
         main_controller(intent_message.slots.movies.first().value,movies,'movieid',kodi.get_movies(),session_id,intent_filter,playlistid)
         result = "Je lance {} sur Kodi".format(intent_message.slots.movies.first().value)
     elif intent_name == "Synchronisation":
-        inject()
-        result = "Je me synchronise avec Kodi" 
+        result = inject() 
     if result is not None:
         hermes.publish_end_session(intent_message.session_id, result)
 
