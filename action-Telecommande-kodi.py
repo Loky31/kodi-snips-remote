@@ -5,12 +5,12 @@ import configparser
 from hermes_python.hermes import Hermes
 from hermes_python.ffi.utils import MqttOptions
 from hermes_python.ontology import *
+from hermes_python.ontology.injection import InjectionRequestMessage, AddInjectionRequest, AddFromVanillaInjectionRequest
 import io
 import json
 import requests
 import kodi
 
-#from hermes_python.ontology.injection import InjectionRequestMessage, AddInjectionRequest, AddFromVanillaInjectionRequest
 
 playing_state_old = 0
 is_in_session=0
@@ -24,18 +24,33 @@ kodi_ip = '192.168.1.3'
 kodi_user = ''
 kodi_pw = ''
 kodi_port = '80'
-debuglevel = 0
+debuglevel = 2 # 0= snips subscriptions; 1= function call; 2= debugs; 3=higher debug
 kodi.init(kodi_user,kodi_pw,kodi_ip,kodi_port,debuglevel)
 
-debuglevel = 2 # 0= snips subscriptions; 1= function call; 2= debugs; 3=higher debug
+
 
 class SnipsConfigParser(configparser.SafeConfigParser):
     def to_dict(self):
         return {section : {option_name : option for option_name, option in self.items(section)} for section in self.sections()}
 
+def ausgabe(text,mode=2):
+    '''
+    main function name -mode= 1
+    debugs -mode= >=2
+     - kodi function -mode= 1
+       -- snips subscription -mode= 0
+    '''
+    ausgabe=""
+    if mode < 2:
+        ausgabe = " - "
+    if mode >= debuglevel:
+        print(ausgabe + str(text))
+    return
+
+
 def build_tupel(json, filtervalue):
     #Build tupels and lists of json
-    #ausgabe('build_tupel',1)
+    ausgabe('build_tupel',1)
     json_data = json
     tupel = []
     for item in json_data:
@@ -48,7 +63,7 @@ def inject():
     #replaces all special chars with ' ' before inject.
     global is_injecting
     is_injecting = 1
-    #ausgabe('inject',1)
+    ausgabe('inject',1)
     send={"operations": [["addFromVanilla",{"shows":[],"movies":[]}]]} #"shows":[],"movies":[],... are entitie names from snips
     tupel = build_tupel(kodi.get_movies(),'title')
     send['operations'][0][1]['movies'] = send['operations'][0][1]['movies']+tupel
@@ -65,12 +80,12 @@ def inject():
 
 def search(slotvalue,slotname,json_d):
     #check if word is in titles of the kodi library. e.g. marvel will be in more than 1 title. if found it will display it in kodi
-    #ausgabe("search",1)
+    ausgabe("search",1)
     titles = kodi.find_title(slotvalue,json_d)
     if len(titles) ==0:
         start_session(session_type="notification", text="aucun média trouvé")
     elif len(titles) >=1:
-        #ausgabe('slotname: '+slotname,2)
+        ausgabe('slotname: '+slotname,2)
         if slotname == 'shows':
             mediatype = 'tvshows'
         elif slotname =='movies':
@@ -95,7 +110,7 @@ def main_controller(slotvalue,slotname,id_slot_name,json_d,session_id,intent_fil
     playlistid: the playlist id for kodi. 0=Music; 1=Movies; 2=Pictures
     '''
     global playing_state_old
-    #ausgabe('main_controller',1)
+    ausgabe('main_controller',1)
     media_id_of_title_found = kodi.find_title_id(slotvalue,'label',id_slot_name,json_d)
     if media_id_of_title_found != 0:
         intent_filter=""
@@ -119,7 +134,7 @@ def main_controller(slotvalue,slotname,id_slot_name,json_d,session_id,intent_fil
         kodi.start_play(playlistid)
     else:
         titles = search(slotvalue,slotname,json_d)
-        #ausgabe(titles)
+        ausgabe(titles)
         if len(titles) == 1:
             end_session(session_id, text="")
             main_controller(titles[0],slotname,id_slot_name,json_d,session_id,intent_filter,playlistid)
