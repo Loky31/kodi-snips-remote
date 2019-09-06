@@ -5,8 +5,6 @@ import json
 import configparser
 import io
 import requests
-import telegram
-import json
 import kodi
 from hermes_python.hermes import Hermes
 from hermes_python.ffi.utils import MqttOptions
