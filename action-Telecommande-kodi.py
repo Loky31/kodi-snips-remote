@@ -159,7 +159,7 @@ def intent_callback(hermes, intent_message):
     elif intent_name == "play_movie":
         main_controller(intent_message.slots.movies.first().value,movies,'movieid',kodi.get_movies(),session_id,intent_filter,playlistid)
         result = "Je lance {} sur Kodi".format(intent_message.slots.movies.first().value)
-    elif intent_name == "synchronisation":
+    elif intent_name == "Synchronisation":
         inject()
         result = "Je me synchronise avec Kodi" 
     if result is not None:
