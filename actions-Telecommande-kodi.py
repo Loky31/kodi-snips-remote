@@ -1,19 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import ConfigParser
+import configparser
 from hermes_python.hermes import Hermes
 from hermes_python.ffi.utils import MqttOptions
 from hermes_python.ontology.injection import InjectionRequestMessage, AddInjectionRequest, AddFromVanillaInjectionRequest
-from hermes_python.ontology import *
 import json
 import io
 import requests
 import kodi
-
-
-
-
 
 
 playing_state_old = 0
