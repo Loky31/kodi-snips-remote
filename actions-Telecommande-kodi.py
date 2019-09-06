@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import json
 import configparser
-import io
-import requests
-import kodi
 from hermes_python.hermes import Hermes
 from hermes_python.ffi.utils import MqttOptions
 from hermes_python.ontology.injection import InjectionRequestMessage, AddInjectionRequest, AddFromVanillaInjectionRequest
+import json
+import io
+import requests
+import kodi
+
 
 playing_state_old = 0
 is_in_session=0
@@ -35,22 +36,6 @@ class SnipsConfigParser(configparser.SafeConfigParser):
             }
             for section in self.sections()
         }
-
-def ausgabe(text,mode=3):
-    # 0= snips subscriptions; 1= function call; 2= debugs; 3=higher debug
-    '''
-    function name -mode= 1
-    debugs -mode= >=2
-     - kodi function -mode= 1
-       -- snips subscription -mode= 0
-    '''
-    ausgabe=""
-    if mode < 1:
-        ausgabe = "   -- "
-    if mode >= debuglevel:
-        print(ausgabe + str(text))
-    return
-        
         
 def build_tupel(json, filtervalue):
     #Build tupels and lists of json
