@@ -10,7 +10,7 @@ import io
 import json
 import requests
 import kodi
-import paho.mqtt.client as mqtt
+import /home/pi/.local/lib/python3.5/site-packages/paho/mqtt/paho.mqtt.client as mqtt
 
 playing_state_old = 0
 is_in_session=0
