@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import configparser
+import ConfigParser
 from hermes_python.hermes import Hermes
 from hermes_python.ffi.utils import MqttOptions
-from hermes_python.ontology.injection import InjectionRequestMessage, AddInjectionRequest, AddFromVanillaInjectionRequest
-import json
+from hermes_python.ontology import *
 import io
+import json
 import requests
 import kodi
 
+#from hermes_python.ontology.injection import InjectionRequestMessage, AddInjectionRequest, AddFromVanillaInjectionRequest
 
 playing_state_old = 0
 is_in_session=0
@@ -27,15 +28,9 @@ kodi_port = '80'
 
 debuglevel = 2 # 0= snips subscriptions; 1= function call; 2= debugs; 3=higher debug
 
-class SnipsConfigParser(configparser.SafeConfigParser):
+class SnipsConfigParser(ConfigParser.SafeConfigParser):
     def to_dict(self):
-        return {
-            section: {
-                option_name: option
-                for option_name, option in self.items(section)
-            }
-            for section in self.sections()
-        }
+        return {section : {option_name : option for option_name, option in self.items(section)} for section in self.sections()}
         
 def build_tupel(json, filtervalue):
     #Build tupels and lists of json
