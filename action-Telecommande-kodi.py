@@ -76,7 +76,6 @@ def inject():
     tupel = build_tupel(kodi.get_shows(),'title')
     send['operations'][0][1]['shows'] = send['operations'][0][1]['shows']+tupel
     tupel = build_tupel(kodi.get_genre(),'title')
-    .publish('hermes/injection/perform', json.dumps(send))
     #request= [
     #    AddFromVanillaInjectionRequest(send)
     #]
