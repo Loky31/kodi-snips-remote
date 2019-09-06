@@ -10,11 +10,15 @@ import io
 import json
 import requests
 import kodi
-
+import paho.mqtt.client as mqtt
 
 playing_state_old = 0
 is_in_session=0
 is_injecting=0
+
+#MQTT host and port
+HOST = '192.168.1.56'
+PORT = 1883
 
 #snips username with ':' or '__' at the end
 snipsuser = "Loky31:"
@@ -25,6 +29,8 @@ kodi_user = ''
 kodi_pw = ''
 kodi_port = '80'
 debuglevel = 2 # 0= snips subscriptions; 1= function call; 2= debugs; 3=higher debug
+
+
 kodi.init(kodi_user,kodi_pw,kodi_ip,kodi_port,debuglevel)
 
 
@@ -70,13 +76,13 @@ def inject():
     tupel = build_tupel(kodi.get_shows(),'title')
     send['operations'][0][1]['shows'] = send['operations'][0][1]['shows']+tupel
     tupel = build_tupel(kodi.get_genre(),'title')
-    self.mqtt_client.publish('hermes/injection/perform', json.dumps(send))
+    .publish('hermes/injection/perform', json.dumps(send))
     #request= [
     #    AddFromVanillaInjectionRequest(send)
     #]
     #with Hermes(mqtt_options=mqtt_opts) as h:
-    #    h.request_injection(request)
-    #Hermes.publish("hermes/injection/perform",json.dumps(send))
+    #   h.publish('hermes/injection/perform', json.dumps(send))
+    client.publish("hermes/injection/perform",json.dumps(send))
     return "Je me synchronise avec Kodi"
 
 def search(slotvalue,slotname,json_d):
@@ -143,7 +149,10 @@ def main_controller(slotvalue,slotname,id_slot_name,json_d,session_id,intent_fil
         elif len(titles) > 1:
             keep_session_alive(session_id,text="okay. was?",intent_filter=intent_filter,customData="media_selected")            
     return
-    
+
+def on_connect(client, userdata, flags, rc):
+    print("Connected to {0} with result code {1}".format(HOST, rc))
+    kodi.init(kodi_user,kodi_pw,kodi_ip,kodi_port,debuglevel)    
  
 def intent_callback(hermes, intent_message):
     intent_name = intent_message.intent.intent_name.replace("Loky31:", "")
@@ -170,3 +179,8 @@ if __name__ == "__main__":
     mqtt_opts = MqttOptions()
     with Hermes(mqtt_options=mqtt_opts) as h:
         h.subscribe_intents(intent_callback).start()
+
+client = mqtt.Client()
+client.on_connect = on_connect
+client.connect(HOST, PORT, 60)
+client.loop_forever()
