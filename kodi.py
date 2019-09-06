@@ -4,9 +4,11 @@
 import json
 import requests
 import re
+
 kodi_url = ''
 debuglevel =0
 playlist_size =20
+
 def ausgabe(text,mode=1):
     '''
     main function name -mode= 1
