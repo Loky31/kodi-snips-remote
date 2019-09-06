@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import ConfigParser
+import configparser
 from hermes_python.hermes import Hermes
 from hermes_python.ffi.utils import MqttOptions
 from hermes_python.ontology import *
@@ -24,14 +24,15 @@ kodi_ip = '192.168.1.3'
 kodi_user = ''
 kodi_pw = ''
 kodi_port = '80'
-
+debuglevel = 0
+kodi.init(kodi_user,kodi_pw,kodi_ip,kodi_port,debuglevel)
 
 debuglevel = 2 # 0= snips subscriptions; 1= function call; 2= debugs; 3=higher debug
 
-class SnipsConfigParser(ConfigParser.SafeConfigParser):
+class SnipsConfigParser(configparser.SafeConfigParser):
     def to_dict(self):
         return {section : {option_name : option for option_name, option in self.items(section)} for section in self.sections()}
-        
+
 def build_tupel(json, filtervalue):
     #Build tupels and lists of json
     #ausgabe('build_tupel',1)
