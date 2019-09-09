@@ -75,13 +75,15 @@ def inject():
     send['operations'][0][1]['movies'] = send['operations'][0][1]['movies']+tupel
     tupel = build_tupel(kodi.get_shows(),'title')
     send['operations'][0][1]['shows'] = send['operations'][0][1]['shows']+tupel
-    tupel = build_tupel(kodi.get_genre(),'title')
     #request= [
     #    AddFromVanillaInjectionRequest(send)
     #]
     #with Hermes(mqtt_options=mqtt_opts) as h:
     #   h.publish('hermes/injection/perform', json.dumps(send))
-    client.publish("hermes/injection/perform",json.dumps(send))
+    with open("kodi.json", "w") as outfile:
+        json.dump(send, outfile)
+    #client.publish("hermes/injection/perform",json.dumps(send))
+    os.execute('mosquitto_pub -t hermes/injection/perform -f kodi.json')
     return "Je me synchronise avec Kodi"
 
 def search(slotvalue,slotname,json_d):
