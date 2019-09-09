@@ -185,17 +185,13 @@ def search(slotvalue,slotname,json_d):
     ausgabe("search",1)
     titles = kodi.find_title(slotvalue,json_d)
     if len(titles) ==0:
-        start_session(session_type="notification", text="keine medien gefunden")
+        start_session(session_type="notification", text="aucun média trouvé")
     elif len(titles) >=1:
         ausgabe('slotname: '+slotname,2)
         if slotname == 'shows':
             mediatype = 'tvshows'
-        elif slotname =='movies':
+        elif slotname =='movies':            
             mediatype = 'movies'
-        elif slotname == 'artist': #or slotname == 'albums':
-            mediatype = 'artists'
-        elif slotname == 'albums':
-            mediatype ='albums'
         kodi.open_gui("", mediatype, slotvalue,isfilter=1)
     return(titles)
 def start_tv():
