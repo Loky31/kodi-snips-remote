@@ -32,7 +32,7 @@ debuglevel = 2 # 0= snips subscriptions; 1= function call; 2= debugs; 3=higher d
 
 
 kodi.init(kodi_user,kodi_pw,kodi_ip,kodi_port,debuglevel)
-print("Connected to {0} with result code {1}".format(HOST, rc))
+#print("Connected to {0} with result code {1}".format(HOST, rc))
 
 playlistid = 1
 
