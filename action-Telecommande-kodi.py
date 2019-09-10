@@ -10,7 +10,7 @@ import io
 import json
 import requests
 import kodi
-import paho.mqtt.client as mqtt
+#import paho.mqtt.client as mqtt
 
 playing_state_old = 0
 is_in_session=0
@@ -31,9 +31,10 @@ kodi_port = '80'
 debuglevel = 2 # 0= snips subscriptions; 1= function call; 2= debugs; 3=higher debug
 
 
-#kodi.init(kodi_user,kodi_pw,kodi_ip,kodi_port,debuglevel)
+kodi.init(kodi_user,kodi_pw,kodi_ip,kodi_port,debuglevel)
+print("Connected to {0} with result code {1}".format(HOST, rc))
 
-
+playlistid = 1
 
 class SnipsConfigParser(configparser.SafeConfigParser):
     def to_dict(self):
@@ -65,6 +66,7 @@ def build_tupel(json, filtervalue):
     return tupel
 
 def inject():
+    
     #makes an injection for snips from the kodi library. Entities Injection must be installed
     #replaces all special chars with ' ' before inject.
     global is_injecting
@@ -134,10 +136,7 @@ def main_controller(slotvalue,slotname,id_slot_name,json_d,session_id,intent_fil
         playing_state_old = 0
         #end_session(session_id, text="")
         kodi.stop()
-        if playlistid == 1:
-            kodi_navigation_gui("videoplaylist")
-        elif playlistid == 0:
-            kodi_navigation_gui("musicplaylist")
+        kodi_navigation_gui("videoplaylist")
         kodi.insert_playlist(id_tupel,id_slot_name, playlistid)
         kodi.start_play(playlistid)
     else:
@@ -181,7 +180,4 @@ if __name__ == "__main__":
     with Hermes(mqtt_options=mqtt_opts) as h:
         h.subscribe_intents(intent_callback).start()
 
-client = mqtt.Client()
-client.on_connect = on_connect
-client.connect(HOST, PORT, 60)
-client.loop_forever()
+

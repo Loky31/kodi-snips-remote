@@ -8,6 +8,7 @@ import re
 kodi_url = ''
 debuglevel =0
 playlist_size =20
+playlistid = 1
 
 def ausgabe(text,mode=1):
     '''
