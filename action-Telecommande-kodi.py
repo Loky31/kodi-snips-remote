@@ -84,6 +84,7 @@ def inject():
     #   h.publish('hermes/injection/perform', json.dumps(send))
     with open("kodi.json", "w") as outfile:
         json.dump(send, outfile)
+    outfile.close()
     #client.publish("hermes/injection/perform",json.dumps(send))
     os.execute('mosquitto_pub -t hermes/injection/perform -f kodi.json')
     return "Je me synchronise avec Kodi"
