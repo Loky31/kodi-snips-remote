@@ -7,6 +7,7 @@ from hermes_python.ffi.utils import MqttOptions
 from hermes_python.ontology import *
 from hermes_python.ontology.injection import InjectionRequestMessage, AddInjectionRequest, AddFromVanillaInjectionRequest
 import io
+import os
 import json
 import requests
 import kodi
@@ -69,14 +70,18 @@ def inject():
     
     #makes an injection for snips from the kodi library. Entities Injection must be installed
     #replaces all special chars with ' ' before inject.
+    print("inject tentative")
     global is_injecting
     is_injecting = 1
     ausgabe('inject',1)
     send={"operations": [["addFromVanilla",{"shows":[],"movies":[]}]]} #"shows":[],"movies":[],... are entitie names from snips
     tupel = build_tupel(kodi.get_movies(),'title')
+    print("tupel movies fait")
     send['operations'][0][1]['movies'] = send['operations'][0][1]['movies']+tupel
     tupel = build_tupel(kodi.get_shows(),'title')
+    print("tupel show fait")
     send['operations'][0][1]['shows'] = send['operations'][0][1]['shows']+tupel
+    print("tupel fait!")
     #request= [
     #    AddFromVanillaInjectionRequest(send)
     #]
@@ -84,9 +89,11 @@ def inject():
     #   h.publish('hermes/injection/perform', json.dumps(send))
     with open("kodi.json", "w") as outfile:
         json.dump(send, outfile)
+    print("json dump fait")
     outfile.close()
     #client.publish("hermes/injection/perform",json.dumps(send))
-    os.execute('mosquitto_pub -t hermes/injection/perform -f kodi.json')
+    os.system('mosquitto_pub -t hermes/injection/perform -f kodi.json')
+    print("injection faite")
     return "Je me synchronise avec Kodi"
 
 def search(slotvalue,slotname,json_d):
@@ -148,13 +155,9 @@ def main_controller(slotvalue,slotname,id_slot_name,json_d,session_id,intent_fil
             main_controller(titles[0],slotname,id_slot_name,json_d,session_id,intent_filter,playlistid)
             return
         elif len(titles) > 1:
-            keep_session_alive(session_id,text="okay. was?",intent_filter=intent_filter,customData="media_selected")            
+            keep_session_alive(session_id,text="okay. was?",intent_filter=intent_filter,customData="media_selected")
     return
 
-def on_connect(client, userdata, flags, rc):
-    print("Connected to {0} with result code {1}".format(HOST, rc))
-    kodi.init(kodi_user,kodi_pw,kodi_ip,kodi_port,debuglevel)    
- 
 def intent_callback(hermes, intent_message):
     intent_name = intent_message.intent.intent_name.replace("Loky31:", "")
     result = None
