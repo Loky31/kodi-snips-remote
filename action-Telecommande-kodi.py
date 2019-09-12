@@ -3,7 +3,6 @@
 
 import configparser
 from hermes_python.hermes import Hermes
-from hermes_python.ffi.utils import MqttOptions
 from hermes_python.ontology import *
 from hermes_python.ontology.injection import InjectionRequestMessage, AddInjectionRequest, AddFromVanillaInjectionRequest
 import io
@@ -11,15 +10,16 @@ import os
 import json
 import requests
 import kodi
-#import paho.mqtt.client as mqtt
+
 
 playing_state_old = 0
 is_in_session=0
 is_injecting=0
 
 #MQTT host and port
-HOST = '192.168.1.56'
-PORT = 1883
+MQTT_IP_ADDR = "localhost"
+MQTT_PORT = 1883
+MQTT_ADDR = "{}:{}".format(MQTT_IP_ADDR, str(MQTT_PORT))
 
 #snips username with ':' or '__' at the end
 snipsuser = "Loky31:"
@@ -39,7 +39,13 @@ playlistid = 1
 
 class SnipsConfigParser(configparser.SafeConfigParser):
     def to_dict(self):
-        return {section : {option_name : option for option_name, option in self.items(section)} for section in self.sections()}
+        return {
+            section: {
+                option_name: option
+                for option_name, option in self.items(section)
+            }
+            for section in self.sections()
+        }
 
 def ausgabe(text,mode=2):
     '''
@@ -87,12 +93,10 @@ def inject():
     #]
     #with Hermes(mqtt_options=mqtt_opts) as h:
     #   h.publish('hermes/injection/perform', json.dumps(send))
-    with open("kodi.json", "w") as outfile:
-        json.dump(send, outfile)
+    os.system("mosquitto_pub -t hermes/injection/perform -m '" + json.dumps(send)+"'")
     print("json dump fait")
     outfile.close()
     #client.publish("hermes/injection/perform",json.dumps(send))
-    os.system('mosquitto_pub -t hermes/injection/perform -f kodi.json')
     print("injection faite")
     return "Je me synchronise avec Kodi"
 
@@ -180,8 +184,7 @@ def intent_callback(hermes, intent_message):
 
 
 if __name__ == "__main__":
-    mqtt_opts = MqttOptions()
-    with Hermes(mqtt_options=mqtt_opts) as h:
+    with Hermes(MQTT_ADDR) as h:
         h.subscribe_intents(intent_callback).start()
 
 
