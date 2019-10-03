@@ -17,7 +17,7 @@ is_in_session=0
 is_injecting=0
 
 #MQTT host and port
-MQTT_IP_ADDR = "localhost"
+MQTT_IP_ADDR = "192.168.1.56"
 MQTT_PORT = 1883
 MQTT_ADDR = "{}:{}".format(MQTT_IP_ADDR, str(MQTT_PORT))
 
@@ -91,11 +91,8 @@ def inject():
     #request= [
     #    AddFromVanillaInjectionRequest(send)
     #]
-    #with Hermes(mqtt_options=mqtt_opts) as h:
-    #   h.publish('hermes/injection/perform', json.dumps(send))
     os.system("mosquitto_pub -t hermes/injection/perform -m '" + json.dumps(send)+"'")
     print("json dump fait")
-    outfile.close()
     #client.publish("hermes/injection/perform",json.dumps(send))
     print("injection faite")
     return "Je me synchronise avec Kodi"
@@ -105,7 +102,7 @@ def search(slotvalue,slotname,json_d):
     ausgabe("search",1)
     titles = kodi.find_title(slotvalue,json_d)
     if len(titles) ==0:
-        start_session(session_type="notification", text="aucun média trouvé")
+        return "Aucun média trouvé"
     elif len(titles) >=1:
         ausgabe('slotname: '+slotname,2)
         if slotname == 'shows':
@@ -114,6 +111,41 @@ def search(slotvalue,slotname,json_d):
             mediatype = 'movies'
         kodi.open_gui("", mediatype, slotvalue,isfilter=1)
     return(titles)
+
+def kodi_navigation_gui(slotvalue,session_id=""):
+    #for the kodi GUI.ActivateWindow. prepares values before send
+    ausgabe('kodi_navigation_gui',1)
+    window=""
+    filtervalue=""
+    if slotvalue == 'home':
+        window='home'
+    elif slotvalue == 'music':
+        window='music'
+        filtervalue="musicdb://"
+    elif slotvalue == 'videos':
+        window='videos'
+        filtervalue="videodb://movies/titles/"
+    elif slotvalue == 'shows':
+        window='videos'
+        filtervalue="videodb://tvshows/titles/"
+    elif slotvalue == 'videoaddon':
+        window='programs'
+        filtervalue="addons://sources/video/"
+    elif slotvalue == 'audiaddon':
+        window='programs'
+        filtervalue="addons://sources/audio/"
+    elif slotvalue == 'executableaddon':
+        window='programs'
+        filtervalue="addons://sources/executable/"
+    elif slotvalue == 'useraddon':
+        window='programs'
+        filtervalue="addons://user/"
+    else:
+        window = slotvalue
+    kodi.open_gui(window=window,filtervalue=filtervalue)
+    if session_id != "":
+        end_session(session_id)
+    return
 
 def main_controller(slotvalue,slotname,id_slot_name,json_d,session_id,intent_filter,playlistid):
     
@@ -134,21 +166,29 @@ def main_controller(slotvalue,slotname,id_slot_name,json_d,session_id,intent_fil
     global playing_state_old
     ausgabe('main_controller',1)
     media_id_of_title_found = kodi.find_title_id(slotvalue,'label',id_slot_name,json_d)
+    print("on défini si c'est une série ou un film")
     if media_id_of_title_found != 0:
         intent_filter=""
+        print("media id trouvé dans la library kodi")
         if slotname =='shows':
+            print("je cherche les épisodes")
             id_slot_name='episodeid'
             json_episodes = kodi.get_episodes_unseen(media_id_of_title_found)
+            print("j'ai cherché les épisodes")
             if json_episodes['limits']['total'] != 0:
                 id_tupel = build_tupel(json_episodes['episodes'], id_slot_name)
+                print("j'ai trouvé des épisodes")
             else:
                 return "aucun épisode trouvé"
         elif slotname=='movies':
             id_tupel = [media_id_of_title_found]
         playing_state_old = 0
         #end_session(session_id, text="")
-        kodi.stop()
-        kodi_navigation_gui("videoplaylist")
+        if slotname =='shows':
+            print("voila ce que j'ai trouvé")
+            kodi_navigation_gui("shows")
+        elif slotname == 'videos':
+            kodi_navigation_gui("videos")
         kodi.insert_playlist(id_tupel,id_slot_name, playlistid)
         kodi.start_play(playlistid)
     else:
@@ -159,26 +199,36 @@ def main_controller(slotvalue,slotname,id_slot_name,json_d,session_id,intent_fil
             main_controller(titles[0],slotname,id_slot_name,json_d,session_id,intent_filter,playlistid)
             return
         elif len(titles) > 1:
-            keep_session_alive(session_id,text="okay. was?",intent_filter=intent_filter,customData="media_selected")
+            keep_session_alive(session_id,text="okay. C'est lequel?",intent_filter=intent_filter,customData="media_selected")
     return
 
 def intent_callback(hermes, intent_message):
     intent_name = intent_message.intent.intent_name.replace("Loky31:", "")
     result = None
+    session_id = intent_message.session_id
+    playlistid = 1
     if intent_name == "play_show":
-        main_controller(intent_message.slots.shows.first().value,shows,'tvshowid',kodi.get_shows(),session_id,intent_filter,playlistid)
+        intent_filter = '"'+snipsuser+'play_show","'+snipsuser+'select_show"'
+        print("je lance une série")
+        main_controller(intent_message.slots.shows.first().value,'shows','tvshowid',kodi.get_shows(),session_id,intent_filter,playlistid)
         result = "Je lance {} sur Kodi".format(intent_message.slots.shows.first().value) 
     elif intent_name == "search_show":
-        search(intent_message.slots.shows.first().value,shows,kodi.get_shows())
+        search(intent_message.slots.shows.first().value,'shows',kodi.get_shows())
         result = "Je cherche {} sur Kodi".format(intent_message.slots.shows.first().value)
     elif intent_name == "search_movie":
-        search(intent_message.slots.movies.first().value,movies,kodi.get_movies())
+        search(intent_message.slots.movies.first().value,'movies',kodi.get_movies())
         result = "Je cherche {} sur Kodi".format(intent_message.slots.movies.first().value)
     elif intent_name == "play_movie":
-        main_controller(intent_message.slots.movies.first().value,movies,'movieid',kodi.get_movies(),session_id,intent_filter,playlistid)
+        intent_filter = '"'+snipsuser+'select_movie","'+snipsuser+'play_movie"'
+        print("je tente de  lancer le film")
+        main_controller(intent_message.slots.movies.first().value,'movies','movieid',kodi.get_movies(),session_id,intent_filter,playlistid)
+        print("film lancé")
         result = "Je lance {} sur Kodi".format(intent_message.slots.movies.first().value)
-    elif intent_name == "Synchronisation":
+    elif intent_name == "synchronisation":
         result = inject() 
+    elif intent_name == "select_movie":
+         intent_filter = '"'+snipsuser+'select_movie","'+snipsuser+'play_movie"'
+         main_controller(intent_message.slots.movies.first().value,'movies','movieid',kodi.get_movies(),session_id,intent_filter,slotisrandom,playlistid)
     if result is not None:
         hermes.publish_end_session(intent_message.session_id, result)
 
@@ -186,5 +236,5 @@ def intent_callback(hermes, intent_message):
 if __name__ == "__main__":
     with Hermes(MQTT_ADDR) as h:
         h.subscribe_intents(intent_callback).start()
-
+    print("MQTT souscrit")
 
