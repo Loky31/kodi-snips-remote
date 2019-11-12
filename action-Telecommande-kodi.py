@@ -28,7 +28,7 @@ snipsuser = "Loky31:"
 kodi_ip = '192.168.1.3'
 kodi_user = ''
 kodi_pw = ''
-kodi_port = '80'
+kodi_port = '8080'
 debuglevel = 2 # 0= snips subscriptions; 1= function call; 2= debugs; 3=higher debug
 
 
